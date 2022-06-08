@@ -1,0 +1,3 @@
+select bu_code_cre_shp||'-'||bu_type_cre_shp||'-'||shp_no as "Shipment_ID", bill_of_lading_no 
+from
+IN_LOADING_UNIT_TRIP_UI
