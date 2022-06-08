@@ -1,0 +1,184 @@
+select "Shipment_ID","Priority" from(
+
+select "Shipment_ID","Priority", ROW_NUMBER() OVER (PARTITION BY "Shipment_ID" order by "Priority" desc) as "Rownumber"
+from 
+
+(
+
+--Yellow --CDT could be bad data
+select distinct ilut.bu_code_cre_shp||'-'||ilut.bu_type_cre_shp||'-'||ilut.shp_no as "Shipment_ID", 'hot' as "Priority"
+from in_loading_unit_trip ilut
+
+inner join in_connected_consignment icc
+     on ilut.in_cont_no = icc.in_cont_no            
+
+        AND ilut.shp_no = icc.shp_no
+
+        AND ilut.bu_code_cre_shp = icc.bu_code_cre_shp
+
+        AND ilut.bu_type_cre_shp = icc.bu_type_cre_shp
+
+        AND icc.lutr_no = ilut.lutr_no 
+
+        AND icc.bu_code_end = ilut.bu_code_end
+
+        AND icc.bu_type_end = ilut.bu_type_end 
+
+        AND ilut.bu_code_dt = icc.bu_code_dt
+
+        AND ilut.bu_type_dt = icc.bu_type_dt  
+        
+inner join in_consignment ic
+
+        on icc.csm_no = ic.csm_no
+
+        AND icc.bu_code_cre_csm = ic.bu_code_cre_csm
+
+        AND icc.bu_type_cre_csm = ic.bu_type_cre_csm            
+
+        AND icc.bu_code_dt = ic.bu_code_dt
+
+        AND icc.bu_type_dt = ic.bu_type_dt          
+        
+
+where
+substr(ilut.bu_code_cre_shp||'-'||ilut.bu_type_cre_shp||'-'||ilut.shp_no,1,7)='015-TSO'
+--and icl.bu_type_rcv_ord = 'STO'
+and icc.in_status >= '10'
+AND icc.in_status < '70'
+and ic.bu_code_dt != ic.bu_code_cnee 
+and ic.bu_type_dt != ic.bu_type_cnee
+
+UNION
+
+--with filters --ODT 
+select distinct ilut.bu_code_cre_shp||'-'||ilut.bu_type_cre_shp||'-'||ilut.shp_no as "Shipment_ID", 'hot' as "Priority" 
+from in_loading_unit_trip ilut
+
+inner join in_connected_consignment icc
+     on ilut.in_cont_no = icc.in_cont_no            
+
+        AND ilut.shp_no = icc.shp_no
+
+        AND ilut.bu_code_cre_shp = icc.bu_code_cre_shp
+
+        AND ilut.bu_type_cre_shp = icc.bu_type_cre_shp
+
+        AND icc.lutr_no = ilut.lutr_no 
+
+        AND icc.bu_code_end = ilut.bu_code_end
+
+        AND icc.bu_type_end = ilut.bu_type_end 
+
+        AND ilut.bu_code_dt = icc.bu_code_dt
+
+        AND ilut.bu_type_dt = icc.bu_type_dt  
+        
+inner join in_consignment ic
+
+        on icc.csm_no = ic.csm_no
+
+        AND icc.bu_code_cre_csm = ic.bu_code_cre_csm
+
+        AND icc.bu_type_cre_csm = ic.bu_type_cre_csm            
+
+        AND icc.bu_code_dt = ic.bu_code_dt
+
+        AND icc.bu_type_dt = ic.bu_type_dt          
+        
+
+inner join in_consignment_line icl
+
+        ON ic.csm_no = icl.csm_no 
+
+        AND ic.bu_code_cre_csm = icl.bu_code_cre_csm 
+
+        AND ic.bu_type_cre_csm = icl.bu_type_cre_csm           
+
+        AND ic.bu_code_dt = icl.bu_code_dt 
+
+        AND ic.bu_type_dt = icl.bu_type_dt 
+        
+where
+substr(ilut.bu_code_cre_shp||'-'||ilut.bu_type_cre_shp||'-'||ilut.shp_no,1,7)='015-TSO'
+and icl.bu_type_rcv_ord = 'STO' -- there are lines that can go to DC/DT that could be teal 
+and icc.in_status >= '10'
+AND icc.in_status < '70'
+and ic.bu_code_dt = ic.bu_code_cnee 
+and ic.bu_type_dt = ic.bu_type_cnee 
+and ic.bu_code_cnee != icl.bu_code_rcv_ord
+and ic.bu_type_cnee != icl.bu_type_rcv_ord
+and icl.bu_code_dt != icl.bu_code_rcv_ord 
+and icl.bu_type_dt != icl.bu_type_rcv_ord
+
+
+UNION
+
+--purple resteer
+select distinct ilut.bu_code_cre_shp||'-'||ilut.bu_type_cre_shp||'-'||ilut.shp_no as "Shipment_ID", 'high' as "Priority"
+from in_loading_unit_trip ilut
+
+inner join in_connected_consignment icc
+     on ilut.in_cont_no = icc.in_cont_no            
+
+        AND ilut.shp_no = icc.shp_no
+
+        AND ilut.bu_code_cre_shp = icc.bu_code_cre_shp
+
+        AND ilut.bu_type_cre_shp = icc.bu_type_cre_shp
+
+        AND icc.lutr_no = ilut.lutr_no 
+
+        AND icc.bu_code_end = ilut.bu_code_end
+
+        AND icc.bu_type_end = ilut.bu_type_end 
+
+        AND ilut.bu_code_dt = icc.bu_code_dt
+
+        AND ilut.bu_type_dt = icc.bu_type_dt  
+        
+inner join in_consignment ic
+
+        on icc.csm_no = ic.csm_no
+
+        AND icc.bu_code_cre_csm = ic.bu_code_cre_csm
+
+        AND icc.bu_type_cre_csm = ic.bu_type_cre_csm            
+
+        AND icc.bu_code_dt = ic.bu_code_dt
+
+        AND icc.bu_type_dt = ic.bu_type_dt          
+        
+
+inner join in_consignment_line icl
+
+        ON ic.csm_no = icl.csm_no 
+
+        AND ic.bu_code_cre_csm = icl.bu_code_cre_csm 
+
+        AND ic.bu_type_cre_csm = icl.bu_type_cre_csm           
+
+        AND ic.bu_code_dt = icl.bu_code_dt 
+
+        AND ic.bu_type_dt = icl.bu_type_dt 
+
+inner join in_container_trip icon
+            on ilut.bu_code_dt = icon.bu_code_dt
+
+        AND ilut.bu_type_dt = icon.bu_type_dt
+        and ilut.in_cont_no = icon.in_cont_no
+        
+where
+substr(ilut.bu_code_cre_shp||'-'||ilut.bu_type_cre_shp||'-'||ilut.shp_no,1,7)='015-TSO'
+--and icl.bu_type_rcv_ord = 'STO'
+and icon.in_status >= '10'
+AND icon.in_status < '70'
+and ic.bu_code_dt = ic.bu_code_cnee  
+and ic.bu_type_dt  = ic.bu_type_cnee 
+and icl.bu_code_dt||'-'||icl.bu_type_dt != icl.bu_code_rcv_resteer||'-'||icl.bu_type_rcv_resteer
+and icl.bu_code_rcv_resteer is not NULL)
+
+order by "Priority" desc)
+where "Rownumber" = 1
+
+
