@@ -45,7 +45,7 @@ locations_bu_skey, location_type, location_time.originally_planned, location_tim
 ##FINAL SELECT
 select distinct 
 NULL as load,
-stp1.name as load_carrier,
+upper(stp1.name) as load_carrier,
 stp1.business_unit_code||'-'||stp1.business_unit_type||'-'||stp1.shipment_id_nbr as load_Number,
 case when stp1.current_event_name = 'Shipment_Cancelled' then 'delete' else NULL end as load_operation,
 3 as load_referenceNumbers,
@@ -104,8 +104,11 @@ NULL as RouteID
 
 
 from stop1_raw_data stp1
-left join stop2_raw_data stp2
-on stp1.shipment_id_nbr=stp2.shipment_id_nbr
+  left join stop2_raw_data stp2
+  on stp1.shipment_id_nbr=stp2.shipment_id_nbr
+
+  -- left join `ingka-ushub-ymsint-prod.YMS_DATA.SCAC_Codes` scac
+  -- on scac.carrier_name=upper(stp1.name)
 
 where stp1.region='NA'
 or stp2.region='NA'
