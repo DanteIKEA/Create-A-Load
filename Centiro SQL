@@ -1,48 +1,111 @@
-with Stop1 as
-(
-  select distinct 
-##shipment main table
-q1.shipment_id_nbr,q1.current_event_code, 
+##Stop 1
 
-##tsp
-shipment.loading_unit_id,shipment.transport_service_provider.name,
+with stop1_raw_data as (
+select distinct 
+##shipment main table
+q1.shipment_id_nbr,q1.current_event_name, 
+
+##shipment level
+shipment.loading_unit_id,shipment.loading_unit_type,shipment.transport_service_provider.name,shipment.region,
 ##nested location data
-locations_bu_skey,location_type,location_time.originally_planned, location_time.estimated,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
-inner join (select shipment_id_nbr,max(bq_upd_dtm) as maxdt
-from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
-group by shipment_id_nbr) q2
-on q1.bq_upd_dtm=q2.maxdt
-and q1.shipment_id_nbr=q2.shipment_id_nbr
+locations_bu_skey, location_type, location_time.originally_planned, location_time.originally_planned,location_time.estimated_lcl,location_time.originally_planned_lcl,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
+
+  inner join (select shipment_id_nbr,max(bq_upd_dtm) as maxdt
+  from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
+  group by shipment_id_nbr) q2
+  on q1.bq_upd_dtm=q2.maxdt
+  and q1.shipment_id_nbr=q2.shipment_id_nbr
 
 where q1.shipment_id_nbr='CTS100003209'
+#determines stop
 and sequence_of_location=1
 ),
 
-Stop2 as 
-(
-select distinct
-  ##shipment main table
-q1.shipment_id_nbr,q1.current_event_code, 
+stop2_raw_data as(
+select distinct 
+##shipment main table
+q1.shipment_id_nbr,q1.current_event_name, 
 
-##tsp
-shipment.loading_unit_id,shipment.transport_service_provider.name,
+##shipment level
+shipment.loading_unit_id,shipment.loading_unit_type,shipment.transport_service_provider.name,shipment.region,
 ##nested location data
-locations_bu_skey,location_type,location_time.originally_planned, location_time.estimated,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
+locations_bu_skey, location_type, location_time.originally_planned, location_time.originally_planned,location_time.estimated_lcl,location_time.originally_planned_lcl,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
 
-inner join (select shipment_id_nbr,max(bq_upd_dtm) as maxdt
-from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
-group by shipment_id_nbr) q2
-on q1.bq_upd_dtm=q2.maxdt
-and q1.shipment_id_nbr=q2.shipment_id_nbr
+  inner join (select shipment_id_nbr,max(bq_upd_dtm) as maxdt
+  from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
+  group by shipment_id_nbr) q2
+  on q1.bq_upd_dtm=q2.maxdt
+  and q1.shipment_id_nbr=q2.shipment_id_nbr
 
-inner join (select q1.shipment_id_nbr, max(sequence_of_location) as sequence
-from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
- group by shipment_id_nbr) q3
- on sequence_of_location=q3.sequence
- and q1.shipment_id_nbr=q3.shipment_id_nbr
+  inner join (select shipment_id_nbr,max(sequence_of_location) as seq
+  from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` ,unnest(shipment.locations)
+  group by shipment_id_nbr) q3
+  on sequence_of_location=q3.seq
+  and q1.shipment_id_nbr=q3.shipment_id_nbr
 
-where q1.shipment_id_nbr='CTS100003209'
+where q1.shipment_id_nbr='CTS100003209')
 
-)
+select 
+NULL as load,
+stp1.name as load_carrier,
+stp1.business_unit_code||'-'||stp1.business_unit_type||'-'||stp1.shipment_id_nbr as load_Number,
+case when stp1.current_event_name = 'Shipment_Cancelled' then 'delete' else NULL end as load_operation,
+3 as load_referenceNumbers,
+stp2.seal_no as load_seal_number,
+stp1.loading_unit_type as TrailerType,
+stp1.shipment_id_nbr as load_shipment_number,
+2 as Stops,
+NULL as stop1_addressLine1,
+NULL as stop1_addressline2,
+NULL as stop1_name,
+NULL as stop1_city,
+NULL as stop1_state,
+NULL as stop1_postalcode,
+2 as stop1_referenceNumbers,
+stp1.business_unit_type as stop1_first_stop_address_bu_type,
+stp1.business_unit_code as stop1_first_stop_address_bu_code,
+NULL as stop1_bill_of_lading,
+stp1.loading_unit_id as stop1_Equipment_Name,
+1 as stop1_sequence,
+coalesce(stp1.estimated_lcl,stp1.originally_planned_lcl) as stop1_earliestappointmenttime,
+#need to create formula
+coalesce(stp1.estimated_lcl,stp1.originally_planned_lcl) as stop1_latestappointmenttime,
+stp1.business_unit_code as stop1_referenceid,
+'pickup' as stop1_stoptype,
+NULL as stop1_wanttime,
+stp1.business_unit_code as stop1_externalAddressId,
+NULL as stop1_customer_ponumber1,
+NULL as stop1_customer_ponumber2,
+NULL as stop2_addressLine1,
+NULL as stop2_addressline2,
+NULL as stop2_name,
+NULL as stop2_city,
+NULL as stop2_state,
+NULL as stop2_postalcode,
+2 as stop2_referenceNumbers,
+stp2.business_unit_type as stop2_last_stop_address_bu_type,
+stp2.business_unit_code as stop2_last_stop_address_bu_code,
+NULL as stop2_bill_of_lading,
+stp2.loading_unit_id as stop2_Equipment_Name,
+2 as stop2_sequence,
+coalesce(stp2.estimated_lcl,stp1.originally_planned_lcl) as stop2_earliestappointmenttime,
+#need to create formula
+coalesce(stp2.estimated_lcl,stp1.originally_planned_lcl) as stop2_latestappointmenttime,
+stp2.business_unit_code as stop2_referenceid,
+'delivery' as stop2_stoptype,
+NULL as stop2_wanttime,
+stp2.business_unit_type as stop2_externalAddressId,
+NULL as stop2_customer_ponumber1,
+NULL as	stop2_customer_ponumber2,
 
-Select * from Stop2
+
+NULL as Priority,
+stp1.loading_unit_id as trailerNumber,
+stp1.region as stop1_country,
+stp2.region as stop2_country,
+NULL as RouteID
+
+
+from stop1_raw_data stp1
+left join stop2_raw_data stp2
+on stp1.shipment_id_nbr=stp2.shipment_id_nbr
