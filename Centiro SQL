@@ -16,9 +16,7 @@ locations_bu_skey, location_type, location_time.originally_planned, location_tim
   on q1.bq_upd_dtm=q2.maxdt
   and q1.shipment_id_nbr=q2.shipment_id_nbr
 
-where q1.shipment_id_nbr='CTS100003209'
-#determines stop
-and sequence_of_location=1
+where sequence_of_location=1
 ),
 
 stop2_raw_data as(
@@ -42,10 +40,10 @@ locations_bu_skey, location_type, location_time.originally_planned, location_tim
   group by shipment_id_nbr) q3
   on sequence_of_location=q3.seq
   and q1.shipment_id_nbr=q3.shipment_id_nbr
+)
 
-where q1.shipment_id_nbr='CTS100003209')
-
-select 
+##FINAL SELECT
+select distinct 
 NULL as load,
 stp1.name as load_carrier,
 stp1.business_unit_code||'-'||stp1.business_unit_type||'-'||stp1.shipment_id_nbr as load_Number,
@@ -63,17 +61,17 @@ NULL as stop1_state,
 NULL as stop1_postalcode,
 2 as stop1_referenceNumbers,
 stp1.business_unit_type as stop1_first_stop_address_bu_type,
-stp1.business_unit_code as stop1_first_stop_address_bu_code,
+cast(stp1.business_unit_code as STRING) as stop1_first_stop_address_bu_code,
 NULL as stop1_bill_of_lading,
-stp1.loading_unit_id as stop1_Equipment_Name,
+cast(stp1.loading_unit_id as STRING) as stop1_Equipment_Name,
 1 as stop1_sequence,
 coalesce(stp1.estimated_lcl,stp1.originally_planned_lcl) as stop1_earliestappointmenttime,
 #need to create formula
 coalesce(stp1.estimated_lcl,stp1.originally_planned_lcl) as stop1_latestappointmenttime,
-stp1.business_unit_code as stop1_referenceid,
+cast(stp1.business_unit_code as STRING) as stop1_referenceid,
 'pickup' as stop1_stoptype,
 NULL as stop1_wanttime,
-stp1.business_unit_code as stop1_externalAddressId,
+cast(stp1.business_unit_code as STRING) as stop1_externalAddressId,
 NULL as stop1_customer_ponumber1,
 NULL as stop1_customer_ponumber2,
 NULL as stop2_addressLine1,
@@ -84,23 +82,23 @@ NULL as stop2_state,
 NULL as stop2_postalcode,
 2 as stop2_referenceNumbers,
 stp2.business_unit_type as stop2_last_stop_address_bu_type,
-stp2.business_unit_code as stop2_last_stop_address_bu_code,
+cast(stp2.business_unit_code as STRING) as stop2_last_stop_address_bu_code,
 NULL as stop2_bill_of_lading,
-stp2.loading_unit_id as stop2_Equipment_Name,
+cast(stp2.loading_unit_id as STRING) as stop2_Equipment_Name,
 2 as stop2_sequence,
 coalesce(stp2.estimated_lcl,stp1.originally_planned_lcl) as stop2_earliestappointmenttime,
 #need to create formula
 coalesce(stp2.estimated_lcl,stp1.originally_planned_lcl) as stop2_latestappointmenttime,
-stp2.business_unit_code as stop2_referenceid,
+cast(stp2.business_unit_code as STRING) as stop2_referenceid,
 'delivery' as stop2_stoptype,
 NULL as stop2_wanttime,
-stp2.business_unit_type as stop2_externalAddressId,
+cast(stp2.business_unit_type as STRING) as stop2_externalAddressId,
 NULL as stop2_customer_ponumber1,
 NULL as	stop2_customer_ponumber2,
 
 
 NULL as Priority,
-stp1.loading_unit_id as trailerNumber,
+cast(stp1.loading_unit_id as STRING)as trailerNumber,
 stp1.region as stop1_country,
 stp2.region as stop2_country,
 NULL as RouteID
@@ -109,3 +107,9 @@ NULL as RouteID
 from stop1_raw_data stp1
 left join stop2_raw_data stp2
 on stp1.shipment_id_nbr=stp2.shipment_id_nbr
+
+where stp1.region='NA'
+or stp2.region='NA'
+
+LIMIT 1000
+
