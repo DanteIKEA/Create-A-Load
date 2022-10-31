@@ -8,7 +8,7 @@ q1.shipment_id_nbr,q1.current_event_name,
 ##shipment level
 shipment.loading_unit_id,shipment.loading_unit_type,shipment.transport_service_provider.name,shipment.region,
 ##nested location data
-locations_bu_skey, location_type, location_time.originally_planned, location_time.estimated,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
+locations_bu_skey, location_type, location_time.originally_planned, location_time.originally_planned,location_time.estimated_lcl,location_time.originally_planned_lcl,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
 
   inner join (select shipment_id_nbr,max(bq_upd_dtm) as maxdt
   from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
@@ -42,9 +42,9 @@ business_unit_code as stop1_first_stop_address_bu_code,
 NULL as stop1_bill_of_lading,
 loading_unit_id as stop1_Equipment_Name,
 1 as stop1_sequence,
-originally_planned as stop1_earliestappointmenttime,
+coalesce(estimated_lcl,originally_planned_lcl) as stop1_earliestappointmenttime,
 #need to create formula
-originally_planned as stop1_latestappointmenttime,
+coalesce(estimated_lcl,originally_planned_lcl) as stop1_latestappointmenttime,
 business_unit_code as stop1_referenceid,
 'pickup' as stop1_stoptype,
 NULL as stop1_wanttime,
