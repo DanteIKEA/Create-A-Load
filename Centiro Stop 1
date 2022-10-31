@@ -1,0 +1,61 @@
+##Stop 1
+
+with stop1_raw_data as (
+select distinct 
+##shipment main table
+q1.shipment_id_nbr,q1.current_event_name, 
+
+##shipment level
+shipment.loading_unit_id,shipment.loading_unit_type,shipment.transport_service_provider.name,shipment.region,
+##nested location data
+locations_bu_skey, location_type, location_time.originally_planned, location_time.estimated,sequence_of_location,business_unit_code,business_unit_type,seal_no from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` q1,unnest(shipment.locations)
+
+  inner join (select shipment_id_nbr,max(bq_upd_dtm) as maxdt
+  from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
+  group by shipment_id_nbr) q2
+  on q1.bq_upd_dtm=q2.maxdt
+  and q1.shipment_id_nbr=q2.shipment_id_nbr
+
+where q1.shipment_id_nbr='CTS100003209'
+#determines stop
+and sequence_of_location=1
+)
+
+select 
+NULL as load,
+name as load_carrier,
+business_unit_code||'-'||business_unit_type||'-'||shipment_id_nbr as load_Number,
+case when current_event_name = 'Shipment_Cancelled' then 'delete' else NULL end as load_operation,
+#Getting seal_no from Stop 2
+loading_unit_type as TrailerType,
+shipment_id_nbr as load_shipment_number,
+2 as Stops,
+NULL as stop1_addressLine1,
+NULL as stop1_addressline2,
+NULL as stop1_name,
+NULL as stop1_city,
+NULL as stop1_state,
+NULL as p1_postalcode,
+2 as stop1_referenceNumbers,
+business_unit_type as stop1_first_stop_address_bu_type,
+business_unit_code as stop1_first_stop_address_bu_code,
+NULL as stop1_bill_of_lading,
+loading_unit_id as stop1_Equipment_Name,
+1 as stop1_sequence,
+originally_planned as stop1_earliestappointmenttime,
+#need to create formula
+originally_planned as stop1_latestappointmenttime,
+business_unit_code as stop1_referenceid,
+'pickup' as stop1_stoptype,
+NULL as stop1_wanttime,
+business_unit_code as stop1_externalAddressId,
+NULL as stop1_customer_ponumber1,
+NULL as stop1_customer_ponumber2,
+NULL as Priority,
+loading_unit_id as trailerNumber,
+region as stop1_country,
+NULL as RouteID
+
+
+
+from stop1_raw_data
