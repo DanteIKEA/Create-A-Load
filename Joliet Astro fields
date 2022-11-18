@@ -1,3 +1,0 @@
-select distinct shortr08,routeno,tripno 
-from
-ast019.R08T1
