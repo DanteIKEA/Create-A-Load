@@ -1,0 +1,4 @@
+select distinct etripid,shortr08,routeno,tripno 
+from
+ast019.R08T1
+where trim(etripid) is not NULL
