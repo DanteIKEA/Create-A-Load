@@ -101,7 +101,7 @@ NULL as Priority,
 cast(stp1.loading_unit_id as STRING)as trailerNumber,
 stp1.region as stop1_country,
 stp2.region as stop2_country,
-NULL as RouteID
+ast.routeno||'-'||ast.tripno as RouteID
 
 
 from stop1_raw_data stp1
@@ -110,9 +110,13 @@ from stop1_raw_data stp1
 
   left join `ingka-ushub-analytics-dev.Dante.SCAC` scac
   on scac.carrier_name=upper(stp1.name)
+  
+  left join `ingka-ushub-analytics-dev.Dante.Astro_trip_sample` ast
+  on ast.etripid=stp1.shipment_id_nbr
+
 
 where stp1.region='NA'
 or stp2.region='NA'
 
-LIMIT 1000
 
+LIMIT 1000
