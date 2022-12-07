@@ -16,7 +16,8 @@ from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipmen
   from `ingka-ofd-solutiondata-prod.pz_centiro_trunkline_no_pii.cent_trnkl_shipment_fcv` 
 
   group by shipment_id_nbr
-  having datetime_diff(current_datetime('UTC'),cast(maxdt as DATETIME),HOUR)<=3) q2
+  having datetime_diff(current_datetime('UTC'),cast(maxdt as DATETIME),HOUR)<=3
+  ) q2
   on q1.bq_upd_dtm=q2.maxdt
   and q1.shipment_id_nbr=q2.shipment_id_nbr
 
@@ -115,7 +116,7 @@ from stop1_raw_data stp1
   left join `ingka-ushub-ymsint-stage.YMS_DATA_EU.SCAC_Codes`  scac
   on trim(upper(scac.carrier_name))=trim(upper(stp1.name))
   
-  left join `ingka-ushub-analytics-dev.Dante.Astro_trip_sample` ast
+  left join `ingka-ushub-ymsint-stage.YMS_DATA_EU.ASTRO_IDS`  ast
   on ast.etripid=stp1.shipment_id_nbr
 
 
@@ -127,5 +128,10 @@ and
 (cast(stp1.business_unit_code as STRING) in ('023','025','960','945')
 or
 cast(stp2.business_unit_code as STRING) in ('023','025','960','945'))
+
+
+
+
+
 
 
